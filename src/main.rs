@@ -1,19 +1,34 @@
-use std::{io::Result, net::UdpSocket};
+use std::{fs::File, io::Read};
 
-fn handle_query(socket: &UdpSocket) -> Result<()> {
-    Ok(())
-}
+use dns_resolver::{
+    protocol::packet::DnsPacket,
+    types::bytepacket_buffer::{BytePacketBuffer, Result},
+};
 
 fn main() -> Result<()> {
-    // dns works on top of udp
-    let socket = UdpSocket::bind(("0.0.0.0", 2053))?;
+    let mut f = File::open("raw_packets/response_packet.txt")?;
+    let mut buffer = BytePacketBuffer::new();
 
-    loop {
-        match handle_query(&socket) {
-            Ok(_) => {}
-            Err(err) => {
-                eprintln!("error occured: {:?}", err)
-            }
-        }
+    let _ = f.read(&mut buffer.buf)?;
+
+    let packet = DnsPacket::from_buffer(&mut buffer)?;
+    println!("{:#?}", packet.header);
+
+    for q in packet.questions {
+        println!("{:#?}", q);
     }
+
+    for a in packet.answers {
+        println!("{:#?}", a);
+    }
+
+    for ns in packet.authorities {
+        println!("{:#?}", ns);
+    }
+
+    for r in packet.resources {
+        println!("{:#?}", r);
+    }
+
+    Ok(())
 }
