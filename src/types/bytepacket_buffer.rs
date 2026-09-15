@@ -14,8 +14,23 @@ impl BytePacketBuffer {
         }
     }
 
+    // change the buffer position
+    fn seek(&mut self, pos: usize) -> Result<()> {
+        self.pos = pos;
+        Ok(())
+    }
+
     fn get_pos(&mut self) -> usize {
         self.pos
+    }
+
+    // give range of bytes
+    fn get_range(&mut self, start: usize, len: usize) -> Result<&[u8]> {
+        if start + len >= 512 {
+            return Err("range is not valid".into());
+        }
+
+        Ok(&self.buf[start..start + len])
     }
 
     fn get(&mut self, pos: usize) -> Result<u8> {
@@ -24,12 +39,6 @@ impl BytePacketBuffer {
         }
 
         Ok(self.buf[pos])
-    }
-
-    // change the buffer position
-    fn seek(&mut self, pos: usize) -> Result<()> {
-        self.pos = pos;
-        Ok(())
     }
 
     // reads single byte and move forward
@@ -65,13 +74,50 @@ impl BytePacketBuffer {
         Ok(res)
     }
 
-    // give range of bytes
-    fn get_range(&mut self, start: usize, len: usize) -> Result<&[u8]> {
-        if start + len >= 512 {
-            return Err("range is not valid".into());
+    pub fn write(&mut self, val: u8) -> Result<()> {
+        if self.pos >= 512 {
+            return Err("End of buffer".into());
         }
 
-        Ok(&self.buf[start..start + len])
+        self.buf[self.pos] = val;
+        self.pos += 1;
+        Ok(())
+    }
+
+    pub fn write_u8(&mut self, val: u8) -> Result<()> {
+        self.write(val)?;
+        Ok(())
+    }
+
+    pub fn write_u16(&mut self, val: u16) -> Result<()> {
+        self.write((val >> 8) as u8)?;
+        self.write((val & 0xFF) as u8)?;
+        Ok(())
+    }
+
+    pub fn write_u32(&mut self, val: u32) -> Result<()> {
+        self.write(((val >> 24) & 0xFF) as u8)?;
+        self.write(((val >> 16) & 0xFF) as u8)?;
+        self.write(((val >> 8) & 0xFF) as u8)?;
+        self.write((val & 0xFF) as u8)?;
+        Ok(())
+    }
+
+    pub fn write_qname(&mut self, qname: &str) -> Result<()> {
+        for label in qname.split(".") {
+            let label_len = label.len();
+            if label_len > 0x3f {
+                return Err("Single label exceeds 63 characters of length".into());
+            }
+
+            self.write_u8(label_len as u8)?;
+            for b in label.as_bytes() {
+                self.write_u8(*b)?;
+            }
+        }
+
+        self.write_u8(0)?;
+        Ok(())
     }
 
     /// Read a qname
