@@ -46,8 +46,7 @@ impl DnsRecord {
             }
             QueryType::A => {
                 if data_len != 4 {
-                    // Return whatever error type your Result uses
-                    // for an invalid A record.
+                    // TODO: handle error here
                 }
 
                 let raw_addr = buf.read_u32()?;
@@ -56,5 +55,34 @@ impl DnsRecord {
                 Ok(DnsRecord::A { domain, addr, ttl })
             }
         }
+    }
+
+    pub fn write(&self, buf: &mut BytePacketBuffer) -> Result<usize> {
+        let start_pos = buf.pos;
+
+        match *self {
+            DnsRecord::UNKNOWN { .. } => {
+                println!("Skipping record: {:?}", self);
+            }
+            DnsRecord::A {
+                ref domain,
+                ref addr,
+                ttl,
+            } => {
+                buf.write_qname(domain)?;
+                buf.write_u16(QueryType::A.to_num())?;
+                buf.write_u16(1)?;
+
+                buf.write_u32(ttl)?;
+
+                let octets = addr.octets();
+                buf.write_u8(octets[0])?;
+                buf.write_u8(octets[1])?;
+                buf.write_u8(octets[2])?;
+                buf.write_u8(octets[3])?;
+            }
+        }
+
+        Ok(buf.pos - start_pos)
     }
 }

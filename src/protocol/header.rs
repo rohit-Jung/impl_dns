@@ -79,6 +79,32 @@ impl DnsHeader {
 
         Ok(())
     }
+
+    pub fn write(&self, buf: &mut BytePacketBuffer) -> Result<()> {
+        buf.write_u16(self.id)?;
+        buf.write_u8(
+            (self.recursion_desired as u8)
+                | ((self.truncation as u8) << 1)
+                | ((self.authoritative_answer as u8) << 2)
+                | self.opcode << 3
+                | ((self.query_or_response as u8) << 7),
+        )?;
+
+        buf.write_u8(
+            (self.response_code as u8)
+                | ((self.checking_disabled as u8) << 4)
+                | ((self.authenticated_data as u8) << 5)
+                | ((self.z as u8) << 6)
+                | ((self.recursion_available as u8) << 7),
+        )?;
+
+        buf.write_u16(self.question_count)?;
+        buf.write_u16(self.answer_count)?;
+        buf.write_u16(self.authority_count)?;
+        buf.write_u16(self.additional_count)?;
+
+        Ok(())
+    }
 }
 
 impl Default for DnsHeader {

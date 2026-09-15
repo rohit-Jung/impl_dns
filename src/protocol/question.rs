@@ -1,4 +1,3 @@
-
 use crate::types::{
     bytepacket_buffer::{BytePacketBuffer, Result},
     query_type::QueryType,
@@ -20,6 +19,15 @@ impl DnsQuestion {
         self.qtype = QueryType::from_num(buf.read_u16()?);
 
         let _ = buf.read_u16()?; // for class 
+        Ok(())
+    }
+
+    pub fn write(&self, buf: &mut BytePacketBuffer) -> Result<()> {
+        buf.write_qname(&self.name)?;
+
+        let type_num = self.qtype.to_num();
+        buf.write_u16(type_num)?;
+        buf.write_u16(1)?; // class
         Ok(())
     }
 }

@@ -16,7 +16,7 @@ pub struct DnsPacket {
 }
 
 impl DnsPacket {
-    fn new() -> DnsPacket {
+    pub fn new() -> DnsPacket {
         DnsPacket {
             header: DnsHeader::new(),
             questions: Vec::new(),
@@ -52,5 +52,38 @@ impl DnsPacket {
         }
 
         Ok(result)
+    }
+
+    pub fn write(&mut self, buf: &mut BytePacketBuffer) -> Result<()> {
+        self.header.question_count = self.questions.len() as u16;
+        self.header.answer_count = self.answers.len() as u16;
+        self.header.authority_count = self.authorities.len() as u16;
+        self.header.additional_count = self.resources.len() as u16;
+
+        self.header.write(buf)?;
+
+        for question in &self.questions {
+            question.write(buf)?;
+        }
+
+        for ans in &self.answers {
+            ans.write(buf)?;
+        }
+
+        for ns in &self.authorities {
+            ns.write(buf)?;
+        }
+
+        for res in &self.resources {
+            res.write(buf)?;
+        }
+
+        Ok(())
+    }
+}
+
+impl Default for DnsPacket {
+    fn default() -> Self {
+        Self::new()
     }
 }
