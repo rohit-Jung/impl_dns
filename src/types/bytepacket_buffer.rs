@@ -14,6 +14,10 @@ impl BytePacketBuffer {
         }
     }
 
+    pub fn pos(&mut self) -> usize {
+        return self.pos;
+    }
+
     // change the buffer position
     fn seek(&mut self, pos: usize) -> Result<()> {
         self.pos = pos;
@@ -39,6 +43,26 @@ impl BytePacketBuffer {
         }
 
         Ok(self.buf[pos])
+    }
+
+    pub fn set(&mut self, pos: usize, val: u8) -> Result<()> {
+        if pos >= 512 {
+            return Err("Invalid buffer position set".into());
+        }
+
+        self.buf[pos] = val;
+        Ok(())
+    }
+
+    pub fn set_u16(&mut self, pos: usize, val: u16) -> Result<()> {
+        if pos >= 512 {
+            return Err("Invalid buffer position set".into());
+        }
+
+        self.set(pos, (val >> 8) as u8)?;
+        self.set(pos, (val & 0xFF) as u8)?;
+
+        Ok(())
     }
 
     // reads single byte and move forward
