@@ -11,7 +11,7 @@ use dns_resolver::{
 fn main() -> Result<()> {
     // a query for rohitjungkathet.com.np
     let qname = "rohitjungkathet.com.np";
-    let qtype = QueryType::A;
+    let qtype = QueryType::AAAA;
 
     // use cloudflare dns
     let cloudflare_dns = ("1.1.1.1", 53);
