@@ -15,7 +15,7 @@ impl BytePacketBuffer {
     }
 
     pub fn pos(&mut self) -> usize {
-        return self.pos;
+        self.pos
     }
 
     // change the buffer position
@@ -29,7 +29,7 @@ impl BytePacketBuffer {
     }
 
     // give range of bytes
-    fn get_range(&mut self, start: usize, len: usize) -> Result<&[u8]> {
+    pub fn get_range(&mut self, start: usize, len: usize) -> Result<&[u8]> {
         if start + len >= 512 {
             return Err("range is not valid".into());
         }
